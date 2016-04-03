@@ -70,7 +70,7 @@ def genderize(name):
 def add_genders(data):
     '''
     Adds in all the genders.  (Kinda slow though.)
-    Brings up warning.  
+    Brings up warning.
     '''
     for i, value in enumerate(data['Gender'].isnull()):
         if value == True:
@@ -91,14 +91,44 @@ def update_with_mean(data, summary_dict, columns= COLS_FOR_SUMMARY):
         data[col] = data[col].fillna(filler)
     return data
 
-def update_with_cc_mean(data):
-    filler_dict = {}
-    for col in columns:
-        filler_dict[col] = {}
-        filler_dict['Yes'] = data[data.Graduated == 'Yes'].mean()[col], 
-        filler_dict['No']: data[data.Graduated == 'No'].mean()[col]} # There should be a way to just generate the one mean, but idk what it is
+# def get_cc_means(data, columns=COLS_FOR_SUMMARY):
+#     cc_means = {}
+#     yes_means = data[data.Graduated == 'Yes'].mean() # returns class conditional means for all relevant columns
+#     no_means =  data[data.Graduated == 'No'].mean()
+#     for col in columns: 
+#         cc_means[col] = {'Yes': yes_means[col], 'No': no_means[col]}
+#         # cc_means[col][y/n] gives class-conditional mean
+#     return cc_means
 
-    pass 
+def update_with_cc_means(data, columns = COLS_FOR_SUMMARY):
+    means = data.groupby('Graduated').mean() # syntax like a dictionary 
+    for col in columns:
+        data.apply(lambda x: means[col.Graduated] if pd.isnull(x[col]) else x[col])
+    return data
+
+
+    #     for i in data[data[col].isnull()].index:
+
+
+
+    # for i in df[df.Vals.isnull()].index:
+    #     df.loc[i, 'Vals'] = means[df.loc[i].Cat]
+
+
+
+    # for i in range(len(data.index)):
+    #     for col in cc_means:
+    #         if data.ix[i][col].isnull():
+    #             data.ix[i][col] = ccmeans[col][data.ix[i]['Graduated']]
+
+
+
+
+    # data[col].groupby(data['Graduated']).mean()['Yes']
+    # for col in cc_means:
+
+    # pass
+    
 
 
 # if __name__ == "__main__":
