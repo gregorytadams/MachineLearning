@@ -1,15 +1,28 @@
 # This file contains the python code for Problem A for Homework 1
 
-# import csv
-# import numpy as np
-# import numpy.ma as ma
 import pandas as pd
 import matplotlib.pyplot as plt
+from numpy.random import choice
 import urllib.request as ur 
 import json
 
 COLS_FOR_SUMMARY = ['GPA', 'Age', 'Days_missed']
 COLS_FOR_HIST = COLS_FOR_SUMMARY
+
+def go():
+    '''
+    Master function, called in __main__ block.  Calls everything.  
+    '''
+    data = read('mock_student_data.csv')
+    for i in COLS_FOR_HIST:
+        generate_histogram(data, i, str(i) + '_initial')
+    summaries = get_summaries(data)
+    save_summaries('summaries_initial', summaries)
+    data = add_genders(data)
+    save_dataframe('data_with_genders', data) 
+    save_dataframe('data_with_mean', update_with_mean(data.copy(), summaries)) # modifies in place if it's not a copy
+    save_dataframe('data_with_cc_mean', update_with_cc_means(data.copy()))
+    save_dataframe('data_with_variance', update_with_variance(data.copy())) 
 
 def read(filename):
     '''
@@ -74,69 +87,58 @@ def add_genders(data):
     '''
     for i, value in enumerate(data['Gender'].isnull()):
         if value == True:
-            data['Gender'].loc[i] = genderize(data['First_name'].loc[i])
-            # print("filled in {}".format(data['First_name'].loc[i]))
+            data.set_value(i, 'Gender', genderize(data['First_name'].loc[i]))
+            print("filled in {}".format(data['First_name'].loc[i])) # watch it work!
     return data 
 
-def save_dataframe(data, filename):
+def save_dataframe(filename, data):
     '''
     saves dataframe to csv 
     '''
-    with open('output/' + filename + '.txt', 'w') as f:
-        data.to_csv(f)
+    data.to_csv('output/' + filename + '.csv')
 
 def update_with_mean(data, summary_dict, columns= COLS_FOR_SUMMARY):
+    '''
+    Updates the dataframe with the overall mean as instructed in 3A
+    '''
     for col in columns:
         filler = summary_dict[col]['mean']
         data[col] = data[col].fillna(filler)
     return data
 
-# def get_cc_means(data, columns=COLS_FOR_SUMMARY):
-#     cc_means = {}
-#     yes_means = data[data.Graduated == 'Yes'].mean() # returns class conditional means for all relevant columns
-#     no_means =  data[data.Graduated == 'No'].mean()
-#     for col in columns: 
-#         cc_means[col] = {'Yes': yes_means[col], 'No': no_means[col]}
-#         # cc_means[col][y/n] gives class-conditional mean
-#     return cc_means
-
-def update_with_cc_means(data, columns = COLS_FOR_SUMMARY):
-    means = data.groupby('Graduated').mean() # syntax like a dictionary 
+def update_with_cc_means(data, columns = COLS_FOR_SUMMARY, groupvar = 'Graduated'):
+    '''
+    Updates the dataframe with the class-conditional mean as instructed in 3B
+    '''
+    means = data.groupby(groupvar).mean() # syntax like a dictionary: means[att][y/n]
     for col in columns:
-        data.apply(lambda x: means[col.Graduated] if pd.isnull(x[col]) else x[col])
+        for i, b in enumerate(data[col].isnull()):
+            if b:
+                att = data[groupvar][i]
+                val = means[col][att]
+                data.set_value(i, col, val)
     return data
 
+def update_with_variance(data, columns = COLS_FOR_SUMMARY):
+    '''
+    Because all the data are whole numbers, I find the probability of a randomly chosen person to be
+    a given value, and assign missing values based on that.
 
-    #     for i in data[data[col].isnull()].index:
+    Implemented as instructed in 3C.
+    '''
+    vc = {}
+    for col in columns:
+        vc[col] = data[col].value_counts()
+    for col in columns:
+        for i, b in enumerate(data[col].isnull()): 
+            if b:
+                vals = vc[col].axes[0]
+                probs = list(map(lambda x: x/sum(vc[col]), vc[col]))
+                data.set_value(i, col, int(choice(vals, 1, probs)))  #choice is from numpy.random
+                # print('replaced col {} index {} with {}'.format(col, i, data[col][i])) # watch it work!
+    return data
 
-
-
-    # for i in df[df.Vals.isnull()].index:
-    #     df.loc[i, 'Vals'] = means[df.loc[i].Cat]
-
-
-
-    # for i in range(len(data.index)):
-    #     for col in cc_means:
-    #         if data.ix[i][col].isnull():
-    #             data.ix[i][col] = ccmeans[col][data.ix[i]['Graduated']]
-
-
-
-
-    # data[col].groupby(data['Graduated']).mean()['Yes']
-    # for col in cc_means:
-
-    # pass
-    
+if __name__ == "__main__":
+    go()
 
 
-# if __name__ == "__main__":
-#     data = read('mock_student_data.csv')
-#     for i in COLS_FOR_HIST:
-#         generate_histogram(data, i, str(i) + '_initial')
-#     save_summaries('summaries_initial', get_summaries(data))
-#     data = add_genders(data)
-#     save_dataframe('data_with_genders', data)
-#     save_dataframe('data_with_mean', update_with_mean(data))
-#     save_dataframe('data_with_cc_mean', update_with_cc_mean(data))
