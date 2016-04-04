@@ -8,7 +8,7 @@ Files:
 
 README: this file
 
-ProblemA.py: all the code for the assignment. Running 'python3 ProblemA.py' will recreate all analysis.
+ProblemA.py: all the code for the assignment. Running 'python3 ProblemA.py' will recreate all analysis (takes ~35 seconds, mostly because of the genderize api).
 
 junk_code.py: a home for lost code.  I use this to store code that I write but end up not using.
 

@@ -20,7 +20,7 @@ def go():
     save_summaries('summaries_initial', summaries)
     data = add_genders(data)
     save_dataframe('data_with_genders', data) 
-    save_dataframe('data_with_mean', update_with_mean(data.copy(), summaries)) # modifies in place if it's not a copy
+    save_dataframe('data_with_mean', update_with_mean(data.copy(), summaries)) # modifies data in place if it's not a copy
     save_dataframe('data_with_cc_mean', update_with_cc_means(data.copy()))
     save_dataframe('data_with_variance', update_with_variance(data.copy())) 
 
@@ -88,7 +88,6 @@ def add_genders(data):
     for i, value in enumerate(data['Gender'].isnull()):
         if value == True:
             data.set_value(i, 'Gender', genderize(data['First_name'].loc[i]))
-            print("filled in {}".format(data['First_name'].loc[i])) # watch it work!
     return data 
 
 def save_dataframe(filename, data):
@@ -135,7 +134,6 @@ def update_with_variance(data, columns = COLS_FOR_SUMMARY):
                 vals = vc[col].axes[0]
                 probs = list(map(lambda x: x/sum(vc[col]), vc[col]))
                 data.set_value(i, col, int(choice(vals, 1, probs)))  #choice is from numpy.random
-                # print('replaced col {} index {} with {}'.format(col, i, data[col][i])) # watch it work!
     return data
 
 if __name__ == "__main__":

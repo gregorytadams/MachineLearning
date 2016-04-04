@@ -20,3 +20,6 @@
     # for col in columns:
     #     for i in set(data[groupvar]):
     #         data[col].loc[(data[col].isnull()) & (data[groupvar] == i)] = means[col][i]
+
+        # for i in set(data[groupvar]):
+        #     data[col].loc[(data[col].isnull()) & (data[groupvar] == i)] = means[col][i]
