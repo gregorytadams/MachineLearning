@@ -9,12 +9,6 @@ import json
 COLS_FOR_SUMMARY = ['GPA', 'Age', 'Days_missed']
 COLS_FOR_HIST = COLS_FOR_SUMMARY
 
-def read(filename):
-    '''
-    Reads in csv data as a pandas DataFrame
-    '''
-    return pd.read_csv(filename)
-
 def get_summaries(data, columns = COLS_FOR_SUMMARY):
     '''
     Gets all the summaries 
@@ -29,6 +23,9 @@ def get_summaries(data, columns = COLS_FOR_SUMMARY):
         'median': data[col].median(), 'missing': len([i for i in data[col].isnull() if i == True])}
     return d
 
+def descriptive_stats(data):
+    return data.describe()
+
 def save_summaries(filename, d):
     '''
     Saves summaries to new file in output folder
@@ -36,20 +33,24 @@ def save_summaries(filename, d):
     with open('output/' + filename + '.txt', 'w') as f:
         json.dump(d, f)
 
-def generate_histogram(data, column, filename):
-    '''
-    Generates a histogram of all the non-missing values
-    '''
-    l = []
-    for i, value in enumerate(data[column].isnull()):
-        if value == False:
-            l.append(data[column][i])
-    plt.hist(l)
-    plt.title(column + ' Histogram')
-    plt.xlabel(column)
-    plt.ylabel("Frequency")
-    plt.savefig('output/' + filename + '.pdf')
-    plt.close()
+# def generate_histogram(data, column, filename):
+#     '''
+#     Generates a histogram of all the non-missing values
+#     '''
+#     l = []
+#     for i, value in enumerate(data[column].isnull()):
+#         if value == False:
+#             l.append(data[column][i])
+#     plt.hist(l)
+#     plt.title(column + ' Histogram')
+#     plt.xlabel(column)
+#     plt.ylabel("Frequency")
+#     # plt.savefig('output/' + filename + '.pdf')
+#     # plt.close()
+
+def make_hist(data):
+    data.hist()
+    plt.show()
 
 def genderize(name):
     '''
@@ -79,7 +80,7 @@ def add_genders(data, gender_col_name, FN_col):
     # print(d)
     for i, value in enumerate(data[gender_col_name].isnull()):
         if value == True:
-            data.set_value(i, gender_col_name, genderize(data[FN_col].loc[i]) #d[data.First_name.loc[i]]['gender'])
+            data.set_value(i, gender_col_name, genderize(data[FN_col].loc[i])) #d[data.First_name.loc[i]]['gender'])
     return data 
 
 # def get_genders(list_of_names):
