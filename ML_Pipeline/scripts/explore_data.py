@@ -9,7 +9,13 @@ import json
 COLS_FOR_SUMMARY = ['GPA', 'Age', 'Days_missed']
 COLS_FOR_HIST = COLS_FOR_SUMMARY
 
-def get_summaries(data, columns = COLS_FOR_SUMMARY):
+def save_dataframe(filename, data):
+    '''
+    saves dataframe to csv 
+    '''
+    data.to_csv('output/' + filename + '.csv')
+
+def get_summaries(data):
     '''
     Gets all the summaries 
 
@@ -17,10 +23,14 @@ def get_summaries(data, columns = COLS_FOR_SUMMARY):
 
     output: dictionary
     '''
+    columns = data.columns.values
     d = {}
     for col in columns:
-        d[col] = {'mean': data[col].mean(), 'std': data[col].std(), 'mode': data[col].mode()[0], \
-        'median': data[col].median(), 'missing': len([i for i in data[col].isnull() if i == True])}
+        d[col] = {'mean': data[col].mean(), \
+        'std': data[col].std(), \
+        'mode': data[col].mode(), \
+        'median': data[col].median(), \
+        'missing': len([i for i in data[col].isnull() if i == True])}
     return d
 
 def descriptive_stats(data):
@@ -48,9 +58,13 @@ def save_summaries(filename, d):
 #     # plt.savefig('output/' + filename + '.pdf')
 #     # plt.close()
 
-def make_hist(data):
+def show_hist(data):
     data.hist()
     plt.show()
+
+def save_hist(data, filename):
+    data.hist()
+    plt.savefig(filename)
 
 def genderize(name):
     '''
