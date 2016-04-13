@@ -56,14 +56,17 @@ def save_hist(data, filename, column='', log_scale=False):
     if column == '': #do the graph matrix?
         data.hist(log = log_scale)
         plt.savefig('output/' + filename)
+        plt.close()
     else:
         if type(column) == list: #are there multiple?
             for i in [column]:
                 data[i].hist(log=log_scale)
                 plt.savefig('output/' + str(i) + '_' + filename)
+                plt.close()
         else: #just one graph
             data[column].hist(log=log_scale)
             plt.savefig('output/' + column + '_' + filename)
+            plt.close()
 
 def genderize(name):
     '''
