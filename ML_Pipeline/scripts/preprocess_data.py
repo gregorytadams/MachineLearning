@@ -49,29 +49,6 @@ def update_with_variance(data, columns):
         data[col].fillna(int(choice(vals, 1, probs)))
     return data 
 
-    #     for i, b in enumerate(data[col].isnull()): 
-    #         if b:
-    #             vals = vc[col].axes[0]
-    #             probs = list(map(lambda x: x/sum(vc[col]), vc[col]))
-    #             data.set_value(i, col, int(choice(vals, 1, probs)))  #choice is from numpy.random
-    # return data
-
-def format_for_logit(data, response, predictor):
-    y = data[response].values
-    if type(predictor) == str:
-        x = data[predictor].values
-        # y = y.reshape(len(y), 1)
-        x = x.reshape(len(x), 1)
-        return x, y
-    else:
-        my_array = data[predictor.pop(0)].values
-        my_array = my_array.reshape(len(my_array), 1)
-        for i in predictor:
-            a = data[i].values
-            a = a.reshape(len(a), 1)
-            # a = a.reshape(len(a), 1)
-            my_array = np.concatenate((my_array, a), axis=1)
-        return my_array, y
 
 def split_train_test(data_x, data_y, prop_in_test):
     '''
