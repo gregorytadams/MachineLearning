@@ -53,12 +53,12 @@ def show_hist(data, column='', log_scale=False):
             plt.show()
 
 def save_hist(data, filename, column='', log_scale=False):
-    if column == '': #do the graph matrix?
+    if column == '': #do the graph matrix
         data.hist(log = log_scale)
         plt.savefig('output/' + filename)
         plt.close()
     else:
-        if type(column) == list: #are there multiple?
+        if type(column) == list: #make multiple
             for i in [column]:
                 data[i].hist(log=log_scale)
                 plt.savefig('output/' + str(i) + '_' + filename)
@@ -67,6 +67,19 @@ def save_hist(data, filename, column='', log_scale=False):
             data[column].hist(log=log_scale)
             plt.savefig('output/' + column + '_' + filename)
             plt.close()
+
+LOG_SCALE_LIST = [ 'RevolvingUtilizationOfUnsecuredLines','NumberOfTime30-59DaysPastDueNotWorse','DebtRatio', \
+'MonthlyIncome','NumberOfTimes90DaysLate','NumberRealEstateLoansOrLines', \
+ 'NumberOfTime60-89DaysPastDueNotWorse', 'NumberOfDependents']
+
+def make_all_indiv_hist(data, log_scale_list=LOG_SCALE_LIST, dont_plot_index = 0):
+    for i in data.columns.values[dont_plot_index:]:
+        if str(i) in log_scale_list:
+            print("Saving {}".format(str(i)))
+            save_hist(data, str(i) + 'hist.pdf', i, log_scale=True)
+        else:
+            print("Saving {}".format(str(i)))
+            save_hist(data, str(i) + 'hist.pdf', i)
 
 def genderize(name):
     '''
