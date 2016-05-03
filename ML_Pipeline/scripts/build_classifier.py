@@ -4,6 +4,7 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 from preprocess_data import update_with_cc_means
+from generate_features import cat_to_binary
 from sklearn import preprocessing, cross_validation, svm, metrics, tree, decomposition, svm
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.linear_model import LogisticRegression, Perceptron, SGDClassifier, OrthogonalMatchingPursuit, RandomizedLogisticRegression
@@ -22,6 +23,7 @@ import matplotlib.pyplot as plt
 from scipy import optimize
 import time
 import csv
+print("imports done")
 
 def format_for_models(data, response, predictor):
     y = data[response].values
@@ -76,15 +78,15 @@ def magic_loop(models_to_run, clfs, params, X, y, k):
     '''
     model_list = [['Models', 'Parameters', 'Split', 'Accuracy', 'Recall', 'AUC', 'F1', 'precision at' + str(k)]]
     for n in range(1, 2):
-        # print("split: {}".format(n))
+        print("split: {}".format(n))
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
         for index,clf in enumerate([clfs[x] for x in models_to_run]):
-            # print(models_to_run[index])
+            print(models_to_run[index])
             parameter_values = params[models_to_run[index]]
             for p in ParameterGrid(parameter_values):
                 try:
                     d = {}
-                    # print("parameters {}".format(p))
+                    print("parameters {}".format(p))
                     clf.set_params(**p)
                     clf.fit(X_train, y_train)
                     y_pred_probs = clf.predict_proba(X_test)[:,1]
@@ -94,7 +96,7 @@ def magic_loop(models_to_run, clfs, params, X, y, k):
                     d['AUC'] = roc_auc_score(y_test, y_pred_probs)
                     d['F1'] = f1_score(y_test, y_pred)
                     d['precision at' + str(k)] = precision_at_k(y_test,y_pred_probs,k)
-                    # print(d)
+                    print(d)
                     # plot_precision_recall_n(y_test, y_pred_probs, clf)
                     model_list.append([models_to_run[index], p, n, d['accuracy'], d['recall'], d['AUC'], d['F1'], d['precision at' + str(k)]])
                 except IndexError as e:
@@ -136,13 +138,13 @@ def plot_precision_recall_n(y_true, y_prob, model_name):
 
 
 
-def main(data_filename, predictors, response, output_filename): 
+def main(data_filename, response, output_filename): 
     clfs, grid = define_clfs_params()
     models_to_run=['KNN','LR', 'RF', 'ET','AB','GB','NB','DT'] 
     data = pd.read_csv(data_filename)
     data = update_with_cc_means(data, response)
     # data = cat_to_binary(data, response)
-    X, y = format_for_models(data, response, predictors))
+    X, y = format_for_models(data, response, list(data.columns.values))
     model_list = magic_loop(models_to_run,clfs,grid,X,y, 0.05)
     # print(model_list)
     with open(output_filename, 'w') as f:
