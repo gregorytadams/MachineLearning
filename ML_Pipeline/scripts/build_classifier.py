@@ -78,15 +78,15 @@ def magic_loop(models_to_run, clfs, params, X, y, k):
     '''
     model_list = [['Models', 'Parameters', 'Split', 'Accuracy', 'Recall', 'AUC', 'F1', 'precision at' + str(k)]]
     for n in range(1, 2):
-        print("split: {}".format(n))
+        # print("split: {}".format(n))
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
         for index,clf in enumerate([clfs[x] for x in models_to_run]):
-            print(models_to_run[index])
+            # print(models_to_run[index])
             parameter_values = params[models_to_run[index]]
             for p in ParameterGrid(parameter_values):
                 try:
                     d = {}
-                    print("parameters {}".format(p))
+                    # print("parameters {}".format(p))
                     clf.set_params(**p)
                     clf.fit(X_train, y_train)
                     y_pred_probs = clf.predict_proba(X_test)[:,1]
@@ -96,7 +96,7 @@ def magic_loop(models_to_run, clfs, params, X, y, k):
                     d['AUC'] = roc_auc_score(y_test, y_pred_probs)
                     d['F1'] = f1_score(y_test, y_pred)
                     d['precision at' + str(k)] = precision_at_k(y_test,y_pred_probs,k)
-                    print(d)
+                    # print(d)
                     # plot_precision_recall_n(y_test, y_pred_probs, clf)
                     model_list.append([models_to_run[index], p, n, d['accuracy'], d['recall'], d['AUC'], d['F1'], d['precision at' + str(k)]])
                 except IndexError as e:
