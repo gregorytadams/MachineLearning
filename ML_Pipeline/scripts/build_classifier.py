@@ -151,3 +151,6 @@ def main(data_filename, response, output_filename):
         w = csv.writer(f)
         for line in model_list:
             w.writerow(line)
+
+if __name__ == "__main__":
+    main('data/cs-training.csv', 'SeriousDlqin2yrs', 'output/whatever.csv')
