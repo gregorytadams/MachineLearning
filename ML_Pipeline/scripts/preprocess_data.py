@@ -12,6 +12,8 @@ def update_with_mean(data):
     '''
     columns = data.columns.values
     for col in columns:
+        if type(col.ix[3]) == str or type(col.ix[3]) == bool:
+            continue
         filler = data[col].mean()
         data[col] = data[col].fillna(filler)
     return data

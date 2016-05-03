@@ -1,9 +1,6 @@
-
-# from itertools import combinations
 from __future__ import division
 import pandas as pd
 import numpy as np
-from preprocess_data import update_with_cc_means
 from sklearn import preprocessing, cross_validation, svm, metrics, tree, decomposition, svm
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.linear_model import LogisticRegression, Perceptron, SGDClassifier, OrthogonalMatchingPursuit, RandomizedLogisticRegression
@@ -22,6 +19,24 @@ import matplotlib.pyplot as plt
 from scipy import optimize
 import time
 import csv
+print("imports done")
+#imports take ~15s
+
+##################################
+### Functions from my pipeline ###
+##################################
+
+def update_with_mean(data):
+    '''
+    Updates the dataframe with the overall mean as instructed in 3A
+    '''
+    columns = data.columns.values
+    for col in columns:
+        if type(data[col][3]) == str or type(data[col][3]) == bool:
+            continue
+        filler = data[col].mean()
+        data[col] = data[col].fillna(filler)
+    return data
 
 def format_for_models(data, response, predictor):
     y = data[response].values
@@ -38,8 +53,21 @@ def format_for_models(data, response, predictor):
             my_array = np.concatenate((my_array, a), axis=1)
         return my_array, y
 
+def cat_to_binary(data, col_name):
+    '''
+    Converts a categorical variable to integer values.  Will make variable binary if there
+    are only two values.
+    '''
+    vals = data[col_name].unique()
+    for i, val in enumerate(vals):
+        print("Replacing {} with {}".format(val, i))
+        data[col_name].replace(val, i, inplace=True)
+    return data
 
 
+#####################################
+### End functions from my pipeline###
+#####################################
 
 def define_clfs_params():
 
@@ -76,10 +104,10 @@ def magic_loop(models_to_run, clfs, params, X, y, k):
     '''
     model_list = [['Models', 'Parameters', 'Split', 'Accuracy', 'Recall', 'AUC', 'F1', 'precision at' + str(k)]]
     for n in range(1, 2):
-        # print("split: {}".format(n))
+        print("split: {}".format(n))
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
         for index,clf in enumerate([clfs[x] for x in models_to_run]):
-            # print(models_to_run[index])
+            print(models_to_run[index])
             parameter_values = params[models_to_run[index]]
             for p in ParameterGrid(parameter_values):
                 try:
@@ -136,16 +164,16 @@ def plot_precision_recall_n(y_true, y_prob, model_name):
 
 
 
-def main(data_filename, predictors, response, output_filename): 
+def main(): 
     clfs, grid = define_clfs_params()
-    models_to_run=['KNN','LR', 'RF', 'ET','AB','GB','NB','DT'] 
-    data = pd.read_csv(data_filename)
-    data = update_with_cc_means(data, response)
-    # data = cat_to_binary(data, response)
-    X, y = format_for_models(data, response, predictors))
+    models_to_run=['KNN','LR', 'RF', 'ET','AB','GB','NB','DT'] #missing 
+    data = pd.read_csv('data/mock_student_data.csv')
+    data = update_with_mean(data)
+    data = cat_to_binary(data, 'Graduated')
+    X, y = format_for_models(data, 'Graduated', list(data.columns.values[6:8]))
     model_list = magic_loop(models_to_run,clfs,grid,X,y, 0.05)
-    # print(model_list)
-    with open(output_filename, 'w') as f:
+    print(model_list)
+    with open('output/model_output.csv', 'w') as f:
         w = csv.writer(f)
         for line in model_list:
             w.writerow(line)
