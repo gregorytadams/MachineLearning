@@ -76,6 +76,7 @@ def magic_loop(models_to_run, clfs, params, X, y, k):
     ''' 
     X and y need to be formatted
     '''
+    tracker = 0
     model_list = [['Models', 'Parameters', 'Split', 'Accuracy', 'Recall', 'AUC', 'F1', 'precision at' + str(k)]]
     for n in range(1, 2):
         # print("split: {}".format(n))
@@ -99,6 +100,9 @@ def magic_loop(models_to_run, clfs, params, X, y, k):
                     # print(d)
                     # plot_precision_recall_n(y_test, y_pred_probs, clf)
                     model_list.append([models_to_run[index], p, n, d['accuracy'], d['recall'], d['AUC'], d['F1'], d['precision at' + str(k)]])
+                    tracker += 1
+                    print(models_to_run[index] + ' ' + str(tracker) + '/1213')
+                    print(p)
                 except IndexError as e:
                     print('Error:',e)
                     continue
