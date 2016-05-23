@@ -1,4 +1,3 @@
-
 # from itertools import combinations
 from __future__ import division
 import pandas as pd
@@ -23,7 +22,7 @@ import matplotlib.pyplot as plt
 from scipy import optimize
 import time
 import csv
-print("imports done")
+print("imports done!")
 
 def format_for_models(data, response, predictor):
     y = data[response].values
@@ -39,8 +38,6 @@ def format_for_models(data, response, predictor):
             a = a.reshape(len(a), 1)
             my_array = np.concatenate((my_array, a), axis=1)
         return my_array, y
-
-
 
 
 def define_clfs_params():
@@ -72,12 +69,17 @@ def define_clfs_params():
 
     return clfs, grid
 
-def magic_loop(models_to_run, clfs, params, X, y, k):
+
+def magic_loop(models_to_run, clfs, params, X, y, Ks=[0.05]):
     ''' 
     X and y need to be formatted
     '''
     tracker = 0
-    model_list = [['Models', 'Parameters', 'Split', 'Accuracy', 'Recall', 'AUC', 'F1', 'precision at' + str(k)]]
+    model_list=[['Models', 'Parameters', 'Split', 'AUROC']]
+    for k in Ks:
+        model_list[0] += ['Accuracy at '+str(k), 'Recall at '+str(k), 'F1 at '+str(k), 'precision at ' + str(k)]
+    print(model_list)
+
     for n in range(1, 2):
         # print("split: {}".format(n))
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
@@ -86,33 +88,62 @@ def magic_loop(models_to_run, clfs, params, X, y, k):
             parameter_values = params[models_to_run[index]]
             for p in ParameterGrid(parameter_values):
                 try:
-                    d = {}
+                    # d = {}
                     # print("parameters {}".format(p))
                     clf.set_params(**p)
                     clf.fit(X_train, y_train)
+                    
+
                     y_pred_probs = clf.predict_proba(X_test)[:,1]
-                    y_pred = clf.predict(X_test)
-                    d['accuracy'] = clf.score(X_test, y_test)
-                    d['recall'] = recall_score(y_test, y_pred)
-                    d['AUC'] = roc_auc_score(y_test, y_pred_probs)
-                    d['F1'] = f1_score(y_test, y_pred)
-                    d['precision at' + str(k)] = precision_at_k(y_test,y_pred_probs,k)
-                    # print(d)
+                    
+
+                    row=[models_to_run[index], p, n, roc_auc_score(y_test, y_pred_probs)]
+                    for k in Ks: #by default Ks has one value
+                        threshold = np.sort(y_pred_probs)[::-1][int(k*len(y_pred_probs))]
+                        y_pred = np.asarray([1 if i >= threshold else 0 for i in y_pred_probs])
+
+                        score_list = []
+                        score_list.append(clf.score(X_test, y_pred))
+                        score_list.append(recall_score(y_test, y_pred))
+                        score_list.append(f1_score(y_test, y_pred))
+                        score_list.append(metrics.precision_score(y_test, y_pred))
+
+                        row += score_list #evaluate_models_at_k(y_pred, X_test, y_test, k)
                     # plot_precision_recall_n(y_test, y_pred_probs, clf)
-                    model_list.append([models_to_run[index], p, n, d['accuracy'], d['recall'], d['AUC'], d['F1'], d['precision at' + str(k)]])
+                    # model_list = [['Models', 'Parameters', 'Split', 'Accuracy at '+str(k), 'Recall at '+str(k), 'AUROC', 'F1 at '+str(k), 'precision at ' + str(k)]]
+                    # model_list.append( d['accuracy at '+str(k)], d['recall'], d['AUROC'], d['F1'], d['precision at ' + str(k)]])
+                    model_list.append(row)
+                    # print(pd.DataFrame(model_list))
+
                     tracker += 1
                     print(models_to_run[index] + ' ' + str(tracker) + '/1213')
                     print(p)
                 except IndexError as e:
                     print('Error:',e)
                     continue
+
     return model_list
 
+# def evaluate_models_at_k(y_pred, X_test, y_test, k):
+#     '''
+#     evaluates one model
 
-def precision_at_k(y_true, y_scores, k):
-    threshold = np.sort(y_scores)[::-1][int(k*len(y_scores))]
-    y_pred = np.asarray([1 if i >= threshold else 0 for i in y_scores])
-    return metrics.precision_score(y_true, y_pred)
+#     returns: dict of values
+#     '''
+#     score_list = []
+#     score_list = []
+#     score_list.append(clf.score(X_test, y_pred))
+#     score_list.append(recall_score(y_test, y_pred))
+#     score_list.append(f1_score(y_test, y_pred))
+#     score_list.append(metrics.precision_score(y_test, y_pred))
+#     return score_list
+
+
+# def precision_at_k(y_true, y_scores, k):
+#     threshold = np.sort(y_scores)[::-1][int(k*len(y_scores))]
+#     y_pred = np.asarray([1 if i >= threshold else 0 for i in y_scores])
+#     return metrics.precision_score(y_true, y_pred)
+
 
 def plot_precision_recall_n(y_true, y_prob, model_name):
     y_score = y_prob
@@ -139,22 +170,57 @@ def plot_precision_recall_n(y_true, y_prob, model_name):
     #plt.savefig(name)
     plt.show()
 
+#get_summary not debugged.
+def get_summary(model_df, n=1):
+    '''
+    gives top n values from model df in each column
+    makes dataframe to outpur to csv
+    '''
+    rv_df = pd.DataFrame(model_df.columns.values)
+    if n == 1:
+        for col in model_df.columns.values[3:]:
+            c = model_df[col]
+            print(c)
+            print(type(c))
+            a = c[1:].idxmax()
+            b = model_df.ix[a]
+            rv_df.append(b)
+    else:
+        for col in model_df.columns.values[3:]:
+            rv_df.append(model_df.sort(col, ascending=False)[:n])
+    return rv_df
 
-
-
-def main(data_filename, response, output_filename): 
+def main(data_filename, response, output_filename, summary_filename): 
     clfs, grid = define_clfs_params()
-    models_to_run=['KNN','LR', 'RF', 'ET','AB','GB','NB','DT'] 
+    # models_to_run = ['SVM', 'SGD', 'KNN','LR', 'RF', 'ET','AB','GB','NB','DT']
+    models_to_run = ['LR', 'NB', 'DT'] 
     data = pd.read_csv(data_filename)
-    data = update_with_cc_means(data, response)
-    # data = cat_to_binary(data, response)
-    X, y = format_for_models(data, response, list(data.columns.values))
-    model_list = magic_loop(models_to_run,clfs,grid,X,y, 0.05)
+    print("data read")
+    data = update_with_cc_means(data, response) #data.head(100)
+    print("I'm imputing wrong but yolo")
+    # data = cat_to_binary(data, response)+
+    X, y = format_for_models(data, response, list(data.columns.values[2:]))
+    print("formatted; running loop...")
+    model_list = magic_loop(models_to_run,clfs,grid,X,y)
+    print("Loop Done! saving...")
+    model_df = pd.DataFrame(model_list)
+    # model_df.to_csv(output_filename)
+    print("getting summary...")
+    summary = get_summary(model_df)
+    print(summary)
+    # summary.to_csv(summary_filename)
+    print("Done!")
     # print(model_list)
-    with open(output_filename, 'w') as f:
-        w = csv.writer(f)
-        for line in model_list:
-            w.writerow(line)
+    # with open(output_filename, 'w') as f:
+    #     w = csv.writer(f)
+    #     for line in model_list:
+    #         w.writerow(line)
+    # summary = get_summary(model_list)
+    # with open(summary_filename, 'w') as f:
+    #     w = csv.writer(f)
+    #     for line in summary:
+    #         w.writerow(line)
 
 if __name__ == "__main__":
-    main('data/cs-training.csv', 'SeriousDlqin2yrs', 'output/whatever.csv')
+    main('data/cs-training.csv', 'SeriousDlqin2yrs', 'output/magic_loop_full.csv', 'output/magic_loop_summary.csv')
+
